@@ -1,0 +1,31 @@
+.page-wrapper {
+  min-height: 100vh;
+  background: var(--color-bg-base);
+}
+
+.page-content {
+  margin-left: 240px;
+  margin-top: 64px;
+  padding: var(--space-8);
+  max-width: 1280px;
+  margin-left: calc(240px + auto);
+  margin-right: auto;
+  width: calc(100% - 240px);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .page-content {
+    margin-left: 60px;
+    width: calc(100% - 60px);
+    padding: var(--space-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .page-content {
+    margin-left: 0;
+    width: 100%;
+    padding: var(--space-4);
+  }
+}

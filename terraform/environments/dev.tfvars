@@ -1,0 +1,7 @@
+project_name     = "clouddocvault"
+environment      = "dev"
+aws_region       = "us-east-1"
+dr_region        = "us-west-2"
+allowed_cidr     = "0.0.0.0/0"
+ec2_key_name     = "clouddocvault-dev"
+alert_email      = "dev@example.com"

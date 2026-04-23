@@ -1,0 +1,9 @@
+apiVersion: 1
+providers:
+  - name:    CloudDocVault
+    orgId:   1
+    type:    file
+    options:
+      path: /var/lib/grafana/dashboards
+    updateIntervalSeconds: 30
+    allowUiUpdates:        false

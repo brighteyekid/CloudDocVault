@@ -1,0 +1,132 @@
+name: Deploy CloudDocVault
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AWS_REGION:   us-east-1
+  TF_VERSION:   1.6.6
+  NODE_VERSION: 20
+
+jobs:
+
+  lint-and-test:
+    name: Lint and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install backend deps
+        run: cd server && npm ci
+
+      - name: Run backend tests
+        run: cd server && npm test
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform fmt check
+        run: cd terraform && terraform fmt -check -recursive
+
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: terraform
+
+      - name: Run checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: terraform
+          soft_fail: false
+
+  deploy-infra:
+    name: Deploy infrastructure
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume:    ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region:        ${{ env.AWS_REGION }}
+          role-session-name: GitHubActionsDeploySession
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Build Lambda packages
+        run: bash lambda/build_lambdas.sh
+
+      - name: Terraform init
+        run: cd terraform && terraform init
+
+      - name: Terraform plan
+        run: cd terraform && terraform plan -var-file=environments/prod.tfvars -out=tfplan -no-color
+        env:
+          TF_VAR_ec2_key_name: ${{ secrets.EC2_KEY_NAME }}
+
+      - name: Terraform apply
+        run: cd terraform && terraform apply -auto-approve tfplan
+
+      - name: Capture Terraform outputs
+        id: tf_outputs
+        run: |
+          cd terraform
+          echo "ec2_ip=$(terraform output -raw ec2_public_ip)"                   >> $GITHUB_OUTPUT
+          echo "s3_bucket=$(terraform output -raw s3_primary_bucket)"            >> $GITHUB_OUTPUT
+          echo "cloudfront=$(terraform output -raw cloudfront_domain)"           >> $GITHUB_OUTPUT
+          echo "cognito_pool=$(terraform output -raw cognito_user_pool_id)"      >> $GITHUB_OUTPUT
+          echo "cognito_client=$(terraform output -raw cognito_client_id)"       >> $GITHUB_OUTPUT
+
+  deploy-app:
+    name: Deploy application
+    needs: deploy-infra
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume:    ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region:        ${{ env.AWS_REGION }}
+          role-session-name: GitHubActionsAppDeploySession
+
+      - name: SSH and deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:        ${{ needs.deploy-infra.outputs.ec2_ip }}
+          username:    ubuntu
+          key:         ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          timeout:     600s
+          script: |
+            set -euo pipefail
+            cd /home/ubuntu/clouddocvault
+            git fetch origin main
+            git reset --hard origin/main
+            bash deploy.sh

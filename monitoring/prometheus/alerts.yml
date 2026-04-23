@@ -1,0 +1,42 @@
+groups:
+  - name: clouddocvault
+    rules:
+      - alert: HighUploadErrorRate
+        expr: rate(cdv_uploads_total{status="error"}[5m]) / rate(cdv_uploads_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Upload error rate exceeds 5%"
+
+      - alert: PresignLatencyHigh
+        expr: histogram_quantile(0.95, rate(cdv_presign_duration_seconds_bucket[10m])) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pre-signed URL generation p95 > 500ms"
+
+      - alert: AnomalyScoreHigh
+        expr: cdv_anomaly_score > 0.8
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Anomaly score above threshold — possible insider threat"
+
+      - alert: LambdaErrorRateHigh
+        expr: rate(cdv_lambda_errors_total[5m]) / rate(cdv_lambda_invocations_total[5m]) > 0.02
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Lambda error rate exceeds 2%"
+
+      - alert: S3StorageGrowthRapid
+        expr: increase(cdv_s3_bucket_size_bytes[1d]) / cdv_s3_bucket_size_bytes > 0.10
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "S3 bucket growing more than 10% per day"
