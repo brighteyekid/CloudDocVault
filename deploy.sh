@@ -66,7 +66,15 @@ echo "Step 5: Creating and configuring AWS resources..."
 # Generate unique identifiers
 TIMESTAMP=$(date +%s)
 RANDOM_ID=$(openssl rand -hex 4)
-EC2_PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "localhost")
+
+# Get EC2 public IP using IMDSv2 (with token)
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" 2>/dev/null)
+if [ -n "$TOKEN" ]; then
+    EC2_PUBLIC_IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "localhost")
+else
+    # Fallback to IMDSv1 or localhost
+    EC2_PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "localhost")
+fi
 
 # Check for existing resources first
 echo "Checking for existing AWS resources..."
@@ -364,10 +372,22 @@ echo "✓ Nginx configured and started"
 # Step 12 — Start or reload PM2
 echo "Step 12: Starting application server..."
 cd /home/ubuntu/CloudDocVault/server
+
+# Stop any existing PM2 processes
 pm2 delete clouddocvault-api 2>/dev/null || true
+
+# Kill any PM2 daemon running as root
+sudo pm2 kill 2>/dev/null || true
+
+# Start PM2 as ubuntu user
 pm2 start ecosystem.config.js --env production
 pm2 save
-pm2 startup systemd -u ubuntu --hp /home/ubuntu | tail -1 | sudo bash
+
+# Setup PM2 startup as ubuntu user
+STARTUP_CMD=$(pm2 startup systemd -u ubuntu --hp /home/ubuntu | grep "sudo")
+if [ -n "$STARTUP_CMD" ]; then
+    eval "$STARTUP_CMD"
+fi
 
 echo "✓ Application server started"
 
