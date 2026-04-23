@@ -12,7 +12,9 @@ import './DocumentDetail.css';
 const DocumentDetail = () => {
   const location = useLocation();
   // Extract the key from the path after /documents/
-  const id = decodeURIComponent(location.pathname.replace('/documents/', ''));
+  // Remove leading slash and decode URI components
+  const pathAfterDocuments = location.pathname.split('/documents/')[1] || '';
+  const id = decodeURIComponent(pathAfterDocuments);
   const [document, setDocument] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -26,6 +28,7 @@ const DocumentDetail = () => {
   const loadDocument = async () => {
     try {
       setLoading(true);
+      console.log('Loading document with ID:', id);
       const response = await apiService.documents.get(id);
       setDocument(response.data);
     } catch (error) {
