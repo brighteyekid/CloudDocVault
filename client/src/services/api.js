@@ -75,13 +75,22 @@ export const apiService = {
   upload: {
     getPresignedUrl: (data) => api.post('/upload/presign', data),
     confirm: (key) => api.post('/upload/confirm', { key }),
-    uploadToS3: (url, file, metadata) => {
-      return axios.put(url, file, {
+    uploadToS3: async (url, file) => {
+      // Use fetch instead of axios to avoid automatic header manipulation
+      const response = await fetch(url, {
+        method: 'PUT',
+        body: file,
         headers: {
-          'Content-Type': file.type,
-          ...metadata
+          'Content-Type': file.type
         }
       });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Upload failed: ${response.status} ${errorText}`);
+      }
+      
+      return response;
     }
   },
 
