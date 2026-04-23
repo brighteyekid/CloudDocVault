@@ -203,7 +203,7 @@ COGNITO_CLIENT_RESPONSE=$(aws cognito-idp create-user-pool-client \
     --user-pool-id "$COGNITO_USER_POOL_ID" \
     --client-name "clouddocvault-client-${RANDOM_ID}" \
     --explicit-auth-flows "ALLOW_USER_PASSWORD_AUTH" "ALLOW_REFRESH_TOKEN_AUTH" \
-    --generate-secret false \
+    --no-generate-secret \
     --refresh-token-validity 30 \
     --access-token-validity 60 \
     --id-token-validity 60 \
@@ -256,13 +256,13 @@ echo ""
 echo "Step 6: Writing backend configuration..."
 
 # Generate JWT secret if not exists
-if [ -f "/home/ubuntu/clouddocvault/server/.env" ]; then
-    JWT_COOKIE_SECRET=$(grep "JWT_COOKIE_SECRET=" /home/ubuntu/clouddocvault/server/.env | cut -d'=' -f2 || openssl rand -hex 32)
+if [ -f "/home/ubuntu/CloudDocVault/server/.env" ]; then
+    JWT_COOKIE_SECRET=$(grep "JWT_COOKIE_SECRET=" /home/ubuntu/CloudDocVault/server/.env | cut -d'=' -f2 || openssl rand -hex 32)
 else
     JWT_COOKIE_SECRET=$(openssl rand -hex 32)
 fi
 
-cat > /home/ubuntu/clouddocvault/server/.env <<EOF
+cat > /home/ubuntu/CloudDocVault/server/.env <<EOF
 PORT=3001
 NODE_ENV=production
 AWS_REGION=${AWS_DEFAULT_REGION}
@@ -283,7 +283,7 @@ echo "✓ Backend configuration written"
 # Step 7 — Write frontend .env file
 echo "Step 7: Writing frontend configuration..."
 
-cat > /home/ubuntu/clouddocvault/client/.env <<EOF
+cat > /home/ubuntu/CloudDocVault/client/.env <<EOF
 VITE_API_BASE_URL=/api
 VITE_APP_NAME=CloudDocVault
 EOF
@@ -292,14 +292,14 @@ echo "✓ Frontend configuration written"
 
 # Step 8 — Install backend dependencies
 echo "Step 8: Installing backend dependencies..."
-cd /home/ubuntu/clouddocvault/server
+cd /home/ubuntu/CloudDocVault/server
 npm ci --omit=dev --silent
 
 echo "✓ Backend dependencies installed"
 
 # Step 9 — Install and build frontend
 echo "Step 9: Building frontend..."
-cd /home/ubuntu/clouddocvault/client
+cd /home/ubuntu/CloudDocVault/client
 npm ci --silent
 npm run build --silent
 
@@ -307,7 +307,7 @@ echo "✓ Frontend built"
 
 # Step 10 — Create log directory
 echo "Step 10: Creating log directory..."
-mkdir -p /home/ubuntu/clouddocvault/logs
+mkdir -p /home/ubuntu/CloudDocVault/logs
 
 echo "✓ Log directory created"
 
@@ -320,7 +320,7 @@ server {
     server_name _;
 
     # Serve React build (static files)
-    root /home/ubuntu/clouddocvault/client/dist;
+    root /home/ubuntu/CloudDocVault/client/dist;
     index index.html;
 
     # Frontend SPA — all non-API routes return index.html
@@ -363,7 +363,7 @@ echo "✓ Nginx configured and started"
 
 # Step 12 — Start or reload PM2
 echo "Step 12: Starting application server..."
-cd /home/ubuntu/clouddocvault/server
+cd /home/ubuntu/CloudDocVault/server
 pm2 delete clouddocvault-api 2>/dev/null || true
 pm2 start ecosystem.config.js --env production
 pm2 save
