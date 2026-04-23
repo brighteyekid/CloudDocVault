@@ -21,8 +21,18 @@ if ! command -v aws &> /dev/null; then
     rm -rf aws awscliv2.zip
 fi
 
+# Check for AWS credentials in environment
+if [[ -z "${AWS_ACCESS_KEY_ID:-}" ]] || [[ -z "${AWS_SECRET_ACCESS_KEY:-}" ]] || [[ -z "${AWS_DEFAULT_REGION:-}" ]]; then
+    echo "ERROR: AWS credentials not set. Please export:"
+    echo "  AWS_ACCESS_KEY_ID"
+    echo "  AWS_SECRET_ACCESS_KEY"
+    echo "  AWS_DEFAULT_REGION"
+    exit 1
+fi
+
+# Test AWS credentials
 if ! aws sts get-caller-identity &> /dev/null; then
-    echo "ERROR: Invalid AWS credentials. Please export AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_DEFAULT_REGION"
+    echo "ERROR: Invalid AWS credentials. Please verify your credentials are correct."
     exit 1
 fi
 
