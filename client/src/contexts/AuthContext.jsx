@@ -68,10 +68,9 @@ export const AuthProvider = ({ children }) => {
       try {
         const response = await authService.refresh();
         dispatch({
-          type: 'REFRESH_TOKEN',
+          type: 'LOGIN_SUCCESS',
           payload: response
         });
-        dispatch({ type: 'SET_LOADING', payload: false });
       } catch (error) {
         dispatch({ type: 'SET_LOADING', payload: false });
       }

@@ -73,8 +73,23 @@ class AuthService {
       const { accessToken, idToken } = response.data;
       this.accessToken = accessToken;
       this.idToken = idToken;
+      
+      // Decode the ID token to get user info
+      const base64Url = idToken.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      
+      const decoded = JSON.parse(jsonPayload);
+      this.user = {
+        sub: decoded.sub,
+        email: decoded.email,
+        name: decoded.name || decoded.email,
+        groups: decoded['cognito:groups'] || []
+      };
 
-      return { accessToken, idToken };
+      return { accessToken, idToken, user: this.user };
     } catch (error) {
       this.clearTokens();
       throw new Error('Session expired');
