@@ -40,25 +40,49 @@ def collect_cloudwatch_metrics():
     start = now - __import__("datetime").timedelta(hours=1)
 
     def _get(metric_name, namespace, dimensions, stat="Sum"):
-        r = cw.get_metric_statistics(
-            Namespace=namespace, MetricName=metric_name,
-            Dimensions=dimensions, StartTime=start, EndTime=now,
-            Period=3600, Statistics=[stat]
-        )
-        pts = r.get("Datapoints", [])
-        return pts[0][stat] if pts else 0.0
+        try:
+            r = cw.get_metric_statistics(
+                Namespace=namespace, MetricName=metric_name,
+                Dimensions=dimensions, StartTime=start, EndTime=now,
+                Period=3600, Statistics=[stat]
+            )
+            pts = r.get("Datapoints", [])
+            return pts[0][stat] if pts else 0.0
+        except Exception as e:
+            print(f"CloudWatch metric error: {e}")
+            return 0.0
 
-    # S3 storage metrics (daily granularity)
-    size = _get("BucketSizeBytes", "AWS/S3",
-                [{"Name": "BucketName", "Value": BUCKET},
-                 {"Name": "StorageType", "Value": "StandardStorage"}], "Average")
-    objs = _get("NumberOfObjects", "AWS/S3",
-                [{"Name": "BucketName", "Value": BUCKET},
-                 {"Name": "StorageType", "Value": "AllStorageTypes"}], "Average")
-    cdv_s3_bucket_size_bytes.set(size)
-    cdv_s3_object_count.set(objs)
+    # Get real-time S3 metrics directly from S3 API
+    try:
+        response = s3.list_objects_v2(Bucket=BUCKET)
+        total_size = 0
+        object_count = 0
+        
+        if 'Contents' in response:
+            for obj in response['Contents']:
+                total_size += obj['Size']
+                object_count += 1
+        
+        # Handle pagination
+        while response.get('IsTruncated', False):
+            response = s3.list_objects_v2(
+                Bucket=BUCKET,
+                ContinuationToken=response['NextContinuationToken']
+            )
+            if 'Contents' in response:
+                for obj in response['Contents']:
+                    total_size += obj['Size']
+                    object_count += 1
+        
+        cdv_s3_bucket_size_bytes.set(total_size)
+        cdv_s3_object_count.set(object_count)
+        print(f"S3 metrics updated: {object_count} objects, {total_size} bytes")
+    except Exception as e:
+        print(f"S3 metrics error: {e}")
+        cdv_s3_bucket_size_bytes.set(0)
+        cdv_s3_object_count.set(0)
 
-    # Lambda metrics for each function
+    # Lambda metrics for each function (CloudWatch)
     for fn in ["presign", "ml-classify", "anomaly"]:
         fn_name = f"clouddocvault-{fn}"
         errors  = _get("Errors",      "AWS/Lambda", [{"Name":"FunctionName","Value":fn_name}])
