@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import { Download, Link as LinkIcon, Trash2, ArrowLeft } from 'lucide-react';
 import PageWrapper from '../components/layout/PageWrapper';
 import Card from '../components/common/Card';
@@ -10,7 +10,9 @@ import { useToast } from '../contexts/ToastContext';
 import './DocumentDetail.css';
 
 const DocumentDetail = () => {
-  const { id } = useParams();
+  const location = useLocation();
+  // Extract the key from the path after /documents/
+  const id = decodeURIComponent(location.pathname.replace('/documents/', ''));
   const [document, setDocument] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);

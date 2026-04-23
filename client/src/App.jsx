@@ -33,7 +33,7 @@ function AppContent() {
               <Documents />
             </AuthGuard>
           } />
-          <Route path="/documents/:id" element={
+          <Route path="/documents/*" element={
             <AuthGuard>
               <DocumentDetail />
             </AuthGuard>
