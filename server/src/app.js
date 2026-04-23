@@ -20,6 +20,9 @@ const settingsRoutes = require('./routes/settings');
 
 const app = express();
 
+// Trust proxy - required when behind nginx
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(helmet({
   contentSecurityPolicy: {

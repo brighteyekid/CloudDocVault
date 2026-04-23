@@ -302,6 +302,7 @@ echo "✓ Frontend configuration written"
 echo "Step 8: Installing backend dependencies..."
 cd /home/ubuntu/CloudDocVault/server
 npm ci --omit=dev --silent
+chown -R ubuntu:ubuntu /home/ubuntu/CloudDocVault/server
 
 echo "✓ Backend dependencies installed"
 
@@ -310,6 +311,7 @@ echo "Step 9: Building frontend..."
 cd /home/ubuntu/CloudDocVault/client
 npm ci --silent
 npm run build --silent
+chown -R ubuntu:ubuntu /home/ubuntu/CloudDocVault/client
 
 echo "✓ Frontend built"
 
