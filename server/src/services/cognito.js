@@ -126,16 +126,24 @@ class CognitoService {
       // Get the signing key
       const key = await this.getSigningKey(decodedHeader.header.kid);
       
-      // Verify the token
+      // Verify the token - access tokens don't have audience, only token_use and client_id
       const decoded = jwt.verify(token, key, {
         algorithms: ['RS256'],
-        issuer: `https://cognito-idp.${process.env.COGNITO_REGION || process.env.AWS_REGION}.amazonaws.com/${this.userPoolId}`,
-        audience: this.clientId
+        issuer: `https://cognito-idp.${process.env.COGNITO_REGION || process.env.AWS_REGION}.amazonaws.com/${this.userPoolId}`
       });
+
+      // Verify token_use is 'access' and client_id matches
+      if (decoded.token_use !== 'access') {
+        throw new Error('Invalid token type');
+      }
+      
+      if (decoded.client_id !== this.clientId) {
+        throw new Error('Invalid client');
+      }
 
       return {
         sub: decoded.sub,
-        email: decoded.email,
+        email: decoded.email || decoded.username,
         groups: decoded['cognito:groups'] || []
       };
     } catch (error) {

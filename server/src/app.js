@@ -37,9 +37,9 @@ app.use(helmet({
   }
 }));
 
-// CORS
+// CORS - Allow all origins for development
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: true, // Allow all origins
   credentials: true
 }));
 
