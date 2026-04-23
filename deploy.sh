@@ -13,6 +13,8 @@ echo "============================================"
 echo "Step 1: Validating AWS credentials..."
 if ! command -v aws &> /dev/null; then
     echo "Installing AWS CLI..."
+    sudo apt-get update -qq
+    sudo apt-get install -y -qq unzip
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
     unzip -q awscliv2.zip
     sudo ./aws/install
