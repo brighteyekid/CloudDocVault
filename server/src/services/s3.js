@@ -112,16 +112,11 @@ class S3Service {
 
   async generatePresignedPutUrl(key, contentType, metadata = {}, expiresIn = 1800) {
     try {
-      const metadataHeaders = {};
-      Object.keys(metadata).forEach(metaKey => {
-        metadataHeaders[`x-amz-meta-${metaKey}`] = metadata[metaKey];
-      });
-
       const command = new PutObjectCommand({
         Bucket: this.primaryBucket,
         Key: key,
         ContentType: contentType,
-        Metadata: metadataHeaders
+        Metadata: metadata // AWS SDK automatically adds x-amz-meta- prefix
       });
 
       const url = await getSignedUrl(this.client, command, { expiresIn });
