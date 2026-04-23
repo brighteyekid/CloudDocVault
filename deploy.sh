@@ -370,6 +370,14 @@ sudo nginx -t
 sudo systemctl restart nginx
 sudo systemctl enable nginx
 
+# Fix permissions for nginx to access static files
+chmod 755 /home/ubuntu
+chmod 755 /home/ubuntu/CloudDocVault
+chmod 755 /home/ubuntu/CloudDocVault/client
+chmod 755 /home/ubuntu/CloudDocVault/client/dist
+chmod 755 /home/ubuntu/CloudDocVault/client/dist/assets 2>/dev/null || true
+find /home/ubuntu/CloudDocVault/client/dist -type f -exec chmod 644 {} \; 2>/dev/null || true
+
 echo "✓ Nginx configured and started"
 
 # Step 12 — Start or reload PM2
