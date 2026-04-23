@@ -22,7 +22,7 @@ router.post('/login', async (req, res, next) => {
     // Set refresh token as httpOnly cookie
     res.cookie('cdv_rt', result.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: false, // Set to true only when using HTTPS
       sameSite: 'strict',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       signed: true
