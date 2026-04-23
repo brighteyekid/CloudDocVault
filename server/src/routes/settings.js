@@ -65,7 +65,9 @@ router.get('/sessions', async (req, res, next) => {
 
     res.json({ sessions });
   } catch (error) {
-    next(error);
+    // Device tracking might not be enabled in Cognito - return empty list
+    console.warn('Failed to list devices:', error.message);
+    res.json({ sessions: [] });
   }
 });
 
