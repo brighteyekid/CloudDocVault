@@ -160,13 +160,8 @@ const Upload = () => {
 
         const { uploadUrl, key } = presignResponse.data;
 
-        // Upload to S3
-        await apiService.upload.uploadToS3(uploadUrl, fileItem.file, {
-          'x-amz-meta-uploaded-by': 'current-user',
-          'x-amz-meta-original-name': fileItem.name,
-          'x-amz-meta-tags': metadata.tags.join(','),
-          'x-amz-meta-access-level': metadata.accessLevel
-        });
+        // Upload to S3 (metadata already included in presigned URL)
+        await apiService.upload.uploadToS3(uploadUrl, fileItem.file, {});
 
         // Update progress
         setFiles(prev => prev.map(f => 
