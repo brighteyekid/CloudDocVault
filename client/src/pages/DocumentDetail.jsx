@@ -12,9 +12,9 @@ import './DocumentDetail.css';
 const DocumentDetail = () => {
   const location = useLocation();
   // Extract the key from the path after /documents/
-  // Remove leading slash and decode URI components
+  // Don't decode here - let the API service handle encoding
   const pathAfterDocuments = location.pathname.split('/documents/')[1] || '';
-  const id = decodeURIComponent(pathAfterDocuments);
+  const id = pathAfterDocuments;
   const [document, setDocument] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
