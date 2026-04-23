@@ -2,33 +2,47 @@ import axios from 'axios';
 
 class AuthService {
   constructor() {
-    this.accessToken = null;
-    this.idToken = null;
-    this.user = null;
+    // Load tokens from localStorage on initialization
+    this.accessToken = localStorage.getItem('accessToken');
+    this.idToken = localStorage.getItem('idToken');
+    const userStr = localStorage.getItem('user');
+    this.user = userStr ? JSON.parse(userStr) : null;
   }
 
   setTokens(accessToken, idToken, user) {
     this.accessToken = accessToken;
     this.idToken = idToken;
     this.user = user;
+    
+    // Persist to localStorage
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('idToken', idToken);
+    localStorage.setItem('user', JSON.stringify(user));
   }
 
   getAccessToken() {
-    return this.accessToken;
+    return this.accessToken || localStorage.getItem('accessToken');
   }
 
   getIdToken() {
-    return this.idToken;
+    return this.idToken || localStorage.getItem('idToken');
   }
 
   getUser() {
-    return this.user;
+    if (this.user) return this.user;
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
   }
 
   clearTokens() {
     this.accessToken = null;
     this.idToken = null;
     this.user = null;
+    
+    // Clear from localStorage
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('idToken');
+    localStorage.removeItem('user');
   }
 
   async login(email, password) {
