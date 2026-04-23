@@ -40,7 +40,7 @@ A secure, cloud-native document management portal built with React, Node.js, and
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/brighteyekid/CloudDocVault
    cd clouddocvault
    ```
 
