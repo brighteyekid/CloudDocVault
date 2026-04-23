@@ -316,6 +316,7 @@ echo "✓ Frontend built"
 # Step 10 — Create log directory
 echo "Step 10: Creating log directory..."
 mkdir -p /home/ubuntu/CloudDocVault/logs
+chown -R ubuntu:ubuntu /home/ubuntu/CloudDocVault/logs
 
 echo "✓ Log directory created"
 
