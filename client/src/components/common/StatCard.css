@@ -8,6 +8,13 @@
   flex-direction: column;
   justify-content: space-between;
   position: relative;
+  transition: transform var(--transition-default), box-shadow var(--transition-default);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: var(--shadow-card), var(--glow-primary);
+  z-index: 10;
 }
 
 .stat-card::before {

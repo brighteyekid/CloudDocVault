@@ -236,6 +236,12 @@ resource "aws_iam_role_policy" "lambda_ml_classify_policy" {
         Resource = "*"
       },
       {
+        Sid    = "ComprehendAccess"
+        Effect = "Allow"
+        Action = ["comprehend:DetectEntities"]
+        Resource = "*"
+      },
+      {
         Sid    = "SageMakerInvoke"
         Effect = "Allow"
         Action = ["sagemaker:InvokeEndpoint"]

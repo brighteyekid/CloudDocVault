@@ -224,4 +224,50 @@ router.get('/:id/link', async (req, res, next) => {
   }
 });
 
+// GET /api/documents/graph/data
+router.get('/graph/data', async (req, res, next) => {
+  try {
+    const scope = req.query.scope || 'all';
+    let prefix = '';
+    if (scope === 'mine') {
+      prefix = `users/${req.user.sub}/`;
+    } else if (scope === 'shared') {
+      prefix = 'shared/';
+    }
+
+    const objects = await s3Service.listObjects(prefix, 1000);
+    if (objects.length === 0) return res.json({ nodes: [], links: [] });
+
+    const keys = objects.map(obj => obj.Key);
+    const metadataList = await s3Service.getObjectsMetadata(keys);
+
+    const nodes = [];
+    const links = [];
+    const entitySet = new Set();
+
+    metadataList.forEach(meta => {
+      const parsedKey = s3Service.parseS3Key(meta.key);
+      const docName = meta.metadata['original-name'] || (parsedKey ? parsedKey.filename : meta.key.split('/').pop());
+      
+      nodes.push({ id: meta.key, name: docName, group: 1, type: 'document', size: meta.size });
+
+      const entitiesStr = meta.metadata['ml_entities'] || '';
+      if (entitiesStr && entitiesStr !== 'none' && entitiesStr !== 'error') {
+        const entities = entitiesStr.split(',');
+        entities.forEach(ent => {
+          if (!entitySet.has(ent)) {
+            entitySet.add(ent);
+            nodes.push({ id: ent, name: ent.replace(/_/g, ' '), group: 2, type: 'entity' });
+          }
+          links.push({ source: meta.key, target: ent, value: 1 });
+        });
+      }
+    });
+
+    res.json({ nodes, links });
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

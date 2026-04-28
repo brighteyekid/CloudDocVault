@@ -8,7 +8,8 @@ import {
   Activity, 
   Settings,
   LogOut,
-  Lock
+  Lock,
+  Network
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import Button from '../common/Button';
@@ -20,6 +21,7 @@ const Sidebar = () => {
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: Grid2X2 },
     { path: '/documents', label: 'Documents', icon: Folder },
+    { path: '/graph', label: 'VaultGraph', icon: Network },
     { path: '/upload', label: 'Upload', icon: UploadCloud },
     { path: '/logs', label: 'Access Logs', icon: ShieldCheck },
     { path: '/observability', label: 'Observability', icon: Activity },

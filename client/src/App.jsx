@@ -13,6 +13,7 @@ import Upload from './pages/Upload';
 import Logs from './pages/Logs';
 import Observability from './pages/Observability';
 import Settings from './pages/Settings';
+import VaultGraph from './pages/VaultGraph';
 import './styles/global.css';
 
 function AppContent() {
@@ -56,6 +57,11 @@ function AppContent() {
           <Route path="/settings" element={
             <AuthGuard>
               <Settings />
+            </AuthGuard>
+          } />
+          <Route path="/graph" element={
+            <AuthGuard>
+              <VaultGraph />
             </AuthGuard>
           } />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
